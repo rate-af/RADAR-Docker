@@ -101,7 +101,7 @@ sudo-linux bin/radar-docker exec -T kafka-1 bash -c "$KAFKA_SCHEMA_RETENTION_CMD
 
 KAFKA_INIT_OPTS=(
     --rm -v "$PWD/etc/schema:/schema/conf"
-    radarbase/kafka-init:0.3.6
+    radarbase/kafka-init:0.4.1
   )
 
 echo "==> Configuring HDFS Connector"
