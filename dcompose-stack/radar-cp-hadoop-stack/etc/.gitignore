@@ -1,10 +1,9 @@
 /mongodb-connector/sink-mongo.properties
 /hdfs-connector/sink-hdfs.properties
 /webserver/nginx.conf
-/webserver/kafka-manager.htpasswd
+/webserver/*.htpasswd
 /webserver/ip-access-control.conf
 /webserver/optional-services.conf
-/webserver/rest-source-auth.htpasswd
 /radar-backend/radar.yml
 /smtp.env
 /rest-api/device-catalog.yml

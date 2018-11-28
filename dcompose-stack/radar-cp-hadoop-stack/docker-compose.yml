@@ -546,10 +546,12 @@ services:
       - certs-data:/data/letsencrypt
       - "./etc/webserver/nginx.conf:/etc/nginx/nginx.conf:ro"
       - "./etc/webserver/cors.conf:/etc/nginx/cors.conf:ro"
+      - "./etc/webserver/output.htpasswd:/etc/nginx/output.htpasswd:ro"
       - "./etc/webserver/ip-access-control.conf:/etc/nginx/ip-access-control.conf:ro"
       - "./etc/webserver/kafka-manager.htpasswd:/etc/nginx/kafka-manager.htpasswd:ro"
       - "./etc/webserver/rest-source-auth.htpasswd:/etc/nginx/rest-source-auth.htpasswd:ro"
-      - "./etc/webserver/optional-services.conf:/etc/nginx/optional-services.conf"
+      - "./etc/webserver/optional-services.conf:/etc/nginx/optional-services.conf:ro"
+      - "${RESTRUCTURE_OUTPUT_DIR}:/var/www/output:ro"
 
   #---------------------------------------------------------------------------#
   # Management Portal                                                         #

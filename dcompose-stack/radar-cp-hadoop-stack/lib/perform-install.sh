@@ -23,13 +23,17 @@ copy_template_if_absent etc/rest-source-authorizer/rest_source_clients_configs.y
 # Set permissions
 sudo-linux chmod og-rw ./.env
 sudo-linux chmod og-rwx ./etc
-if [ -e ./output ]; then
-  sudo-linux chmod og-rwx ./output
-else
-  sudo-linux mkdir -m 0700 ./output
-fi
 
 . ./.env
+
+RESTRUCTURE_OUTPUT_DIR="$(abspath "${RESTRUCTURE_OUTPUT_DIR:-output}")"
+ensure_variable "RESTRUCTURE_OUTPUT_DIR=" "$RESTRUCTURE_OUTPUT_DIR" .env
+
+if [ -e "$RESTRUCTURE_OUTPUT_DIR" ]; then
+  sudo-linux chmod og-rwx "$RESTRUCTURE_OUTPUT_DIR"
+else
+  sudo-linux mkdir -m 0700 "$RESTRUCTURE_OUTPUT_DIR"
+fi
 
 if [ "${ENABLE_HTTPS:-yes}" = yes ]; then
   copy_template_if_absent etc/webserver/nginx.conf
@@ -63,6 +67,9 @@ ensure_env_password KAFKA_MANAGER_PASSWORD "Kafka Manager password not set in .e
 
 ensure_env_default REST_SOURCE_AUTH_USERNAME restauthadmin
 ensure_env_password REST_SOURCE_AUTH_PASSWORD "REST_SOURCE_AUTH_PASSWORD not set in .env."
+
+ensure_env_default OUTPUT_DATA_USERNAME admin
+ensure_env_password OUTPUT_DATA_PASSWORD "Output data password is not set in .env."
 
 if [ -z ${PORTAINER_PASSWORD_HASH} ]; then
   query_password PORTAINER_PASSWORD "Portainer password not set in .env."
@@ -138,6 +145,8 @@ else
   done
   sed_i "s/^\(\s*\).*# NGINX_PROXIES/\1$proxies# NGINX_PROXIES/" etc/webserver/nginx.conf
 fi
+
+sudo-linux docker run --rm httpd:2.4-alpine htpasswd -nbB "${OUTPUT_DATA_USERNAME}" "${OUTPUT_DATA_PASSWORD}" > etc/webserver/output.htpasswd
 
 # Configure Optional services
 if [[ "${ENABLE_OPTIONAL_SERVICES}" = "true" ]]; then
