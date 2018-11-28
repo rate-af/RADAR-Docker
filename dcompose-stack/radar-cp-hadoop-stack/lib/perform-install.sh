@@ -30,9 +30,9 @@ RESTRUCTURE_OUTPUT_DIR="$(abspath "${RESTRUCTURE_OUTPUT_DIR:-output}")"
 ensure_variable "RESTRUCTURE_OUTPUT_DIR=" "$RESTRUCTURE_OUTPUT_DIR" .env
 
 if [ -e "$RESTRUCTURE_OUTPUT_DIR" ]; then
-  sudo-linux chmod og-rwx "$RESTRUCTURE_OUTPUT_DIR"
+  sudo-linux chmod 0755 "$RESTRUCTURE_OUTPUT_DIR"
 else
-  sudo-linux mkdir -m 0700 "$RESTRUCTURE_OUTPUT_DIR"
+  sudo-linux mkdir -m 0755 "$RESTRUCTURE_OUTPUT_DIR"
 fi
 
 if [ "${ENABLE_HTTPS:-yes}" = yes ]; then
