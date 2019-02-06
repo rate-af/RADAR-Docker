@@ -78,14 +78,14 @@ services:
       retries: 3
 
   radar-rest-sources-authorizer:
-      image: radarbase/radar-rest-source-authorizer:1.0.0
-      networks:
-        - api
-      depends_on:
-        - radar-rest-sources-backend
-        - radarbase-postgresql
-      healthcheck:
-        test: ["CMD", "wget", "--spider", "http://localhost:80"]
-        interval: 1m30s
-        timeout: 5s
-        retries: 3
+    image: radarbase/radar-rest-source-authorizer:1.0.0
+    networks:
+      - api
+    depends_on:
+      - radar-rest-sources-backend
+      - radarbase-postgresql
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:80"]
+      interval: 1m30s
+      timeout: 5s
+      retries: 3
