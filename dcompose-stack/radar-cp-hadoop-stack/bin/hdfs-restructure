@@ -16,7 +16,7 @@ cd $DIR
 . .env
 
 # HDFS restructure version
-DOCKER_IMAGE=radarbase/radar-hdfs-restructure:0.5.3
+DOCKER_IMAGE=radarbase/radar-hdfs-restructure:0.5.4
 
 NUM_THREADS=${RESTRUCTURE_NUM_THREADS:-3}
 # HDFS restructure script flags
@@ -88,12 +88,12 @@ if ! command -v zip > /dev/null 2>&1; then
   exit 0
 fi
 
-function create_snapshots() {
-  PROJECT_DIR="$1"
-  project=$(basename "${PROJECT_DIR}")
-  cd "$PROJECT_DIR"
-  SNAPSHOT_DIR=../snapshots/$project
-  SNAPSHOT_TMP_DIR=../snapshots/+tmp
+function create_user_snapshots() {
+  USER_DIR="$1"
+  user=$(basename "${USER_DIR}")
+  cd "$USER_DIR"
+  SNAPSHOT_DIR=../../snapshots/$project/$user
+  SNAPSHOT_TMP_DIR=../../snapshots/+tmp
   mkdir -p $SNAPSHOT_DIR $SNAPSHOT_TMP_DIR
 
   months=$(find . -name "[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9].*" -printf "%f\n" | cut -c-6 | sort -u)
@@ -113,5 +113,32 @@ function create_snapshots() {
   cd "$OLDPWD"
 }
 
-export -f create_snapshots
-find "$OUTPUT_DIR" -mindepth 1 -maxdepth 1 -type d ! -name snapshots ! -name +tmp -print0 | xargs -0 -n 1 -P $NUM_THREADS -I {} bash -c 'create_snapshots "$@"' _ {}
+function create_project_snapshots() {
+  PROJECT_DIR="$1"
+  project=$(basename "${PROJECT_DIR}")
+  cd "PROJECT_DIR"
+  SNAPSHOT_DIR=.
+  SNAPSHOT_TMP_DIR=../+tmp
+  mkdir -p $SNAPSHOT_TMP_DIR
+
+  months=$(find . -mindepth 1 -name "[0-9][0-9][0-9][0-9][0-9][0-9].zip" -printf "%f\n" | cut -c-6 | sort -u)
+  for month in $months; do
+    SNAPSHOT=$SNAPSHOT_DIR/$month.zip
+    SNAPSHOT_TMP=$SNAPSHOT_TMP_DIR/$month.zip
+    if [ -e $SNAPSHOT ]; then
+      find . -mindepth 1 -name "$month.zip" | zip -0@u $SNAPSHOT -O $SNAPSHOT_TMP
+      if [ -e $SNAPSHOT_TMP ]; then
+        mv $SNAPSHOT_TMP $SNAPSHOT
+      fi
+    else
+      find . -mindepth 1 -name "$month.zip" | zip -0@ $SNAPSHOT_TMP
+      mv $SNAPSHOT_TMP $SNAPSHOT
+    fi
+  done
+  cd "$OLDPWD"
+}
+
+export -f create_user_snapshots
+export -f create_project_snapshots
+find "$OUTPUT_DIR" -mindepth 2 -maxdepth 2 -type d ! -name snapshots ! -name +tmp -print0 | xargs -0 -n 1 -P $NUM_THREADS -I {} bash -c 'create_user_snapshots "$@"' _ {}
+find "$OUTPUT_DIR/snapshots" -mindepth 1 -maxdepth 1 -type d ! -name +tmp -print0 | xargs -0 -n 1 -P $NUM_THREADS -I {} bash -c 'create_project_snapshots "$@"' _ {}
