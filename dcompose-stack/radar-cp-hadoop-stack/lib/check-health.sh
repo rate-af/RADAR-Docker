@@ -51,10 +51,10 @@ done <<< "$(sudo-linux $stack config --services)"
 
 if [ $(uname) != "Darwin" ]; then
   for unit in radar-check-health.timer radar-output.timer radar-renew-certificate.timer radar-docker.service; do
-    if ! sudo systemctl is-active "${SYSTEMCTL_OPTS[@]}" $unit > /dev/null; then
+    if ! sudo-linux systemctl is-active "${SYSTEMCTL_OPTS[@]}" $unit > /dev/null; then
       unhealthy+=($timer)
-      sudo systemctl enable "${SYSTEMCTL_OPTS[@]}" $unit
-      sudo systemctl start "${SYSTEMCTL_OPTS[@]}" $unit
+      sudo-linux systemctl enable "${SYSTEMCTL_OPTS[@]}" $unit
+      sudo-linux systemctl start "${SYSTEMCTL_OPTS[@]}" $unit
     fi
   done
 fi
