@@ -7,6 +7,13 @@ stack=bin/radar-docker
 . lib/util.sh
 . ./.env
 
+if [ "$(id -un)" == "root" ] || id -Gn | grep -qe '\<sudo\>'; then
+  SYSTEMCTL_OPTS=()
+else
+  SYSTEMCTL_OPTS=(--user)
+  export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$UID}
+fi
+
 function slack_notify() {
     # Send notification via Slack, if configured.
     if [ "$HEALTHCHECK_SLACK_NOTIFY" == "yes" ] ; then
@@ -15,9 +22,10 @@ function slack_notify() {
             exit 1
         fi
 
+        channel=${HEALTHCHECK_SLACK_CHANNEL:-#radar-ops}
         color=$1
         body=$2
-        curl -X POST --data-urlencode "payload={\"channel\": \"#radar-ops\", \"username\": \"radar-healthcheck\", \"icon_emoji\": \":hospital:\", \"attachments\": [{\"color\": \"$color\", \"fallback\": \"$body\", \"fields\": [{\"title\": \"Health update\", \"value\": \"$body\"}]}]}" \
+        curl -X POST --data-urlencode "payload={\"channel\": \"$channel\", \"username\": \"radar-healthcheck\", \"icon_emoji\": \":hospital:\", \"attachments\": [{\"color\": \"$color\", \"fallback\": \"$body\", \"fields\": [{\"title\": \"Health update\", \"value\": \"$body\"}]}]}" \
             $HEALTHCHECK_SLACK_WEBHOOK_URL
     fi
 }
@@ -40,6 +48,16 @@ while read service; do
         sudo-linux $stack restart ${service}
     fi
 done <<< "$(sudo-linux $stack config --services)"
+
+if [ $(uname) != "Darwin" ]; then
+  for unit in radar-check-health.timer radar-output.timer radar-renew-certificate.timer radar-docker.service; do
+    if ! sudo systemctl is-active "${SYSTEMCTL_OPTS[@]}" $unit > /dev/null; then
+      unhealthy+=($timer)
+      sudo systemctl enable "${SYSTEMCTL_OPTS[@]}" $unit
+      sudo systemctl start "${SYSTEMCTL_OPTS[@]}" $unit
+    fi
+  done
+fi
 
 display_host="${SERVER_NAME} ($(hostname -f), $(curl -s http://ipecho.net/plain))"
 
